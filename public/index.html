@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css">
+    <title>Photo Feed</title>
+    <style type="text/css">
+    #photoFile {
+        display: none;
+    }
+    #app img {
+        max-width: 100%;
+    }
+    .image-row {
+        margin: 20px 0;
+    }
+    .image-row .thumbnail {
+        padding: 2px;
+        border: 1px solid #d9d9d9;
+    }
+    .lds-ring {
+        display: inline-block;
+        position: relative;
+        width: 64px;
+        height: 64px;
+    }
+    .lds-ring div {
+        box-sizing: border-box;
+        display: block;
+        position: absolute;
+        width: 51px;
+        height: 51px;
+        margin: 6px;
+        border: 6px solid #777;
+        border-radius: 50%;
+        animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+        border-color: #777 transparent transparent transparent;
+    }
+    .lds-ring div:nth-child(1) {
+        animation-delay: -0.45s;
+    }
+    .lds-ring div:nth-child(2) {
+        animation-delay: -0.3s;
+    }
+    .lds-ring div:nth-child(3) {
+        animation-delay: -0.15s;
+    }
+    @keyframes lds-ring {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="#">GoFoto</a>
+            <div>
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" v-on:click="filePicker" href="#">Upload</a>
+                        <input type="file" id="photoFile" ref="myFiles" @change="upload" name="file" />
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="container">
+            <div class="row justify-content-md-center" id="loading" v-if="loading">
+                <div class="col-xs-12">
+                    <div class="lds-ring">
+                        <div></div><div></div><div></div><div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row justify-content-md-center image-row" v-for="photo in photos">
+                <div class="col col-lg-4 col-md-6 col-xs-12">
+                    <img class="thumbnail" :src="photo.src" alt="" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="//js.pusher.com/4.0/pusher.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+    <script type="text/javascript">
+    var app = new Vue({
+        el: '#app',
+        data: {
+            photos: [],
+            loading: true,
+        },
+        mounted() {
+            const pusher = new Pusher('PUSHER_APP_KEY', {
+                cluster: 'PUSHER_APP_SECRET',
+                encrypted: true
+            });
+
+            let channel = pusher.subscribe('photo-stream')
+
+            channel.bind('new-photo', data => this.photos.unshift(data));
+
+            axios.get('/photos').then(res => {
+                this.loading = false
+                this.photos = res.data.items ? res.data.items : []
+            })
+        },
+        methods: {
+            filePicker: function () {
+                let elem = document.getElementById('photoFile');
+                if (elem && document.createEvent) {
+                    let evt = document.createEvent("MouseEvents");
+                    evt.initEvent("click", true, false);
+                    elem.dispatchEvent(evt);
+                }
+            },
+            upload: function () {
+                let data = new FormData();
+                data.append('file', this.$refs.myFiles.files[0]);
+
+                axios.post('/photos', data).then(res => {
+                    console.log(res)
+                })
+            }
+        }
+    });
+    </script>
+</body>
+</html>
