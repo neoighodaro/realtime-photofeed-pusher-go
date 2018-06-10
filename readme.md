@@ -1,6 +1,8 @@
 # Build a realtime photo stream using Go and Pusher Channels
 This is a demo on how to build a realtime photo feed using Go and Pusher.
 
+[View tutorial](https://pusher.com/tutorials/photo-feed-go-vuejs)
+
 ### Prerequisites
 - An IDE of your choice e.g. [Visual Studio Code](https://code.visualstudio.com/).
 - [Go](https://golang.org/doc/install) installed on your computer.
